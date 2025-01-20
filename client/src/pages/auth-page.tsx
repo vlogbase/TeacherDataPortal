@@ -58,6 +58,7 @@ export default function AuthPage() {
               <Input
                 id="username"
                 type="text"
+                autoComplete="username"
                 className="border-[#2D6A4F]/20"
                 {...form.register("username", { required: true })}
               />
@@ -67,6 +68,7 @@ export default function AuthPage() {
               <Input
                 id="password"
                 type="password"
+                autoComplete={isLogin ? "current-password" : "new-password"}
                 className="border-[#2D6A4F]/20"
                 {...form.register("password", { required: true })}
               />
