@@ -32,23 +32,30 @@ export function registerRoutes(app: Express): Server {
   // Create new teacher
   app.post("/api/teachers", requireAuth, async (req, res) => {
     try {
-      const teacherData = {
-        ...req.body,
-        employmentDate: new Date(req.body.employmentDate),
-        createdAt: new Date(),
-        updatedAt: new Date(),
-        userId: req.user.id,
-      };
+      // Extract only the fields we want to save
+      const { name, email, qualifications, subjectsTaught, school, lga, employmentDate } = req.body;
 
+      // Create the teacher with proper date handling
       const [newTeacher] = await db
         .insert(teachers)
-        .values(teacherData)
+        .values({
+          name,
+          email,
+          qualifications,
+          subjectsTaught,
+          school,
+          lga,
+          employmentDate: new Date(employmentDate),
+          createdAt: new Date(),
+          updatedAt: new Date(),
+          userId: req.user.id,
+        })
         .returning();
 
       res.status(201).json(newTeacher);
     } catch (error) {
       console.error("Teacher creation error:", error);
-      res.status(500).json({ error: "Failed to create teacher" });
+      res.status(500).json({ error: "Failed to create teacher", details: error.message });
     }
   });
 
@@ -58,6 +65,7 @@ export function registerRoutes(app: Express): Server {
       const allTeachers = await db.select().from(teachers);
       res.json(allTeachers);
     } catch (error) {
+      console.error("Error fetching teachers:", error);
       res.status(500).json({ error: "Failed to fetch teachers" });
     }
   });
@@ -77,6 +85,7 @@ export function registerRoutes(app: Express): Server {
 
       res.json(teacher);
     } catch (error) {
+      console.error("Error fetching teacher:", error);
       res.status(500).json({ error: "Failed to fetch teacher" });
     }
   });
@@ -84,10 +93,18 @@ export function registerRoutes(app: Express): Server {
   // Update teacher
   app.put("/api/teachers/:id", requireAuth, async (req, res) => {
     try {
+      const { name, email, qualifications, subjectsTaught, school, lga, employmentDate } = req.body;
+
       const [updatedTeacher] = await db
         .update(teachers)
         .set({
-          ...req.body,
+          name,
+          email,
+          qualifications,
+          subjectsTaught,
+          school,
+          lga,
+          employmentDate: new Date(employmentDate),
           updatedAt: new Date(),
         })
         .where(eq(teachers.id, parseInt(req.params.id)))
@@ -99,6 +116,7 @@ export function registerRoutes(app: Express): Server {
 
       res.json(updatedTeacher);
     } catch (error) {
+      console.error("Error updating teacher:", error);
       res.status(500).json({ error: "Failed to update teacher" });
     }
   });
@@ -112,6 +130,7 @@ export function registerRoutes(app: Express): Server {
 
       res.status(204).send();
     } catch (error) {
+      console.error("Error deleting teacher:", error);
       res.status(500).json({ error: "Failed to delete teacher" });
     }
   });
@@ -175,6 +194,7 @@ export function registerRoutes(app: Express): Server {
 
       res.json(documents);
     } catch (error) {
+      console.error("Error fetching documents:", error);
       res.status(500).json({ error: "Failed to fetch documents" });
     }
   });
