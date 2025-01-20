@@ -11,6 +11,7 @@ import Navigation from "@/components/layout/navigation";
 import DocumentUpload from "@/components/forms/document-upload";
 import type { Teacher } from "@db/schema";
 import TeacherQRCode from "@/components/teacher/qr-code";
+import SocialShare from "@/components/teacher/social-share";
 
 // Omit the auto-generated fields and userId from the form data
 type TeacherFormData = Omit<Teacher, 'id' | 'createdAt' | 'updatedAt' | 'userId'>;
@@ -107,7 +108,16 @@ export default function TeacherForm() {
       <main className="container mx-auto px-4 py-8">
         <Card className="max-w-2xl mx-auto">
           <CardHeader>
-            <CardTitle>{isEditing ? "Edit Teacher" : "Add New Teacher"}</CardTitle>
+            <div className="flex justify-between items-center">
+              <CardTitle>{isEditing ? "Edit Teacher" : "Add New Teacher"}</CardTitle>
+              {isEditing && (
+                <SocialShare 
+                  teacherId={teacherId} 
+                  teacherName={teacher?.name || ""}
+                  achievements={teacher?.qualifications}
+                />
+              )}
+            </div>
           </CardHeader>
           <CardContent>
             <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
