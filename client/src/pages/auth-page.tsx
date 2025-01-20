@@ -25,11 +25,30 @@ export default function AuthPage() {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-50">
-      <Card className="w-full max-w-md mx-4">
+    <div className="min-h-screen bg-[#2D6A4F] flex flex-col items-center justify-center relative p-4">
+      {/* Decorative elements */}
+      <div className="absolute top-8 right-8 flex gap-2">
+        <div className="w-4 h-4 rounded-full bg-[#95D5B2] opacity-50"></div>
+        <div className="w-4 h-4 rounded-full bg-[#95D5B2] opacity-75"></div>
+      </div>
+      <div className="absolute bottom-8 left-8">
+        <div className="w-12 h-12 rounded-full bg-white/20 flex items-center justify-center">
+          <div className="w-8 h-8 rounded-full bg-white/40"></div>
+        </div>
+      </div>
+
+      {/* Main content */}
+      <div className="text-center mb-8 text-white">
+        <h1 className="text-4xl font-bold mb-4">Teachers Digitisation Project</h1>
+        <p className="text-lg text-[#B7E4C7]">
+          A secure online portal for Academic and Non-Academic Staff in Niger State
+        </p>
+      </div>
+
+      <Card className="w-full max-w-md bg-white/95 backdrop-blur">
         <CardHeader className="space-y-1">
-          <CardTitle className="text-2xl font-bold text-center">
-            {isLogin ? "Login" : "Register"}
+          <CardTitle className="text-2xl font-bold text-center text-[#2D6A4F]">
+            {isLogin ? "Sign In" : "Create Account"}
           </CardTitle>
         </CardHeader>
         <CardContent>
@@ -39,6 +58,7 @@ export default function AuthPage() {
               <Input
                 id="username"
                 type="text"
+                className="border-[#2D6A4F]/20"
                 {...form.register("username", { required: true })}
               />
             </div>
@@ -47,11 +67,15 @@ export default function AuthPage() {
               <Input
                 id="password"
                 type="password"
+                className="border-[#2D6A4F]/20"
                 {...form.register("password", { required: true })}
               />
             </div>
-            <Button type="submit" className="w-full">
-              {isLogin ? "Login" : "Register"}
+            <Button 
+              type="submit" 
+              className="w-full bg-[#2D6A4F] hover:bg-[#1B4332] text-white"
+            >
+              {isLogin ? "Sign In" : "Register"}
             </Button>
           </form>
 
@@ -59,11 +83,11 @@ export default function AuthPage() {
             <Button
               variant="link"
               onClick={() => setIsLogin(!isLogin)}
-              className="text-sm"
+              className="text-sm text-[#2D6A4F]"
             >
               {isLogin
                 ? "Don't have an account? Register"
-                : "Already have an account? Login"}
+                : "Already have an account? Sign In"}
             </Button>
           </div>
         </CardContent>
