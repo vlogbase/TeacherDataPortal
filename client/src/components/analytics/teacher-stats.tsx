@@ -149,26 +149,28 @@ const ActiveShape = (props: any) => {
   );
 };
 
-// Responsive chart container component with improved sizing
+// Responsive chart container component with improved sizing and responsiveness
 const ResponsiveChartContainer = ({ children, minHeight = 300 }: { children: React.ReactNode, minHeight?: number }) => {
   const [ref, setRef] = useState<HTMLDivElement | null>(null);
   const dimensions = useResizeObserver(ref);
 
   return (
-    <div 
-      ref={setRef} 
-      className="w-full" 
-      style={{ 
+    <div
+      ref={setRef}
+      className="w-full"
+      style={{
         minHeight,
         height: '100%',
-        maxHeight: '600px' // Prevent excessive height on large screens
+        maxHeight: '600px', // Prevent excessive height on large screens
+        position: 'relative' // For proper sizing
       }}
     >
       {dimensions && (
-        <div 
-          style={{ 
+        <div
+          style={{
             width: '100%',
-            height: Math.max(minHeight, Math.min(dimensions.height, 600))
+            height: Math.max(minHeight, Math.min(dimensions.height, 600)),
+            position: 'relative' // For proper chart positioning
           }}
         >
           {children}
@@ -178,6 +180,7 @@ const ResponsiveChartContainer = ({ children, minHeight = 300 }: { children: Rea
   );
 };
 
+//export default function TeacherStats({ teachers }: TeacherStatsProps) {
 export default function TeacherStats({ teachers }: TeacherStatsProps) {
   // Chart state
   const [activePieIndex, setActivePieIndex] = useState<number | undefined>();
@@ -299,7 +302,7 @@ export default function TeacherStats({ teachers }: TeacherStatsProps) {
   };
 
   return (
-    <div className="space-y-6 p-4 sm:p-6">
+    <div className="space-y-6 p-4 sm:p-6 bg-background">
       {/* Summary Cards */}
       <div className="grid gap-4 sm:gap-6 grid-cols-1 sm:grid-cols-2 lg:grid-cols-4">
         <Card className="col-span-1">
@@ -312,7 +315,7 @@ export default function TeacherStats({ teachers }: TeacherStatsProps) {
         </Card>
       </div>
 
-      {/* Charts Grid with improved spacing and layout */}
+      {/* Charts Grid with improved spacing and responsive layout */}
       <div className="grid gap-6 grid-cols-1 lg:grid-cols-2">
         {/* LGA Distribution */}
         <Card className="col-span-1 min-h-[500px]">
@@ -324,8 +327,8 @@ export default function TeacherStats({ teachers }: TeacherStatsProps) {
                   Distribution of teachers across Local Government Areas
                 </p>
               </div>
-              <Button 
-                variant="outline" 
+              <Button
+                variant="outline"
                 size="sm"
                 onClick={() => resetZoom(setLgaChartState)}
               >
@@ -336,38 +339,40 @@ export default function TeacherStats({ teachers }: TeacherStatsProps) {
           <CardContent className="p-4 sm:p-6 pt-0 h-[400px]">
             <ResponsiveChartContainer>
               <ResponsiveContainer width="100%" height="100%">
-                <BarChart 
+                <BarChart
                   data={lgaData}
-                  margin={{ top: 30, right: 30, left: 60, bottom: 90 }}
+                  margin={{ top: 30, right: 30, left: 70, bottom: 90 }}
                   onMouseDown={(e) => handleBarChartMouseDown(e, lgaChartState, setLgaChartState)}
                   onMouseMove={(e) => handleBarChartMouseMove(e, lgaChartState, setLgaChartState)}
                   onMouseUp={() => handleBarChartMouseUp(lgaChartState, setLgaChartState)}
                 >
                   <CartesianGrid strokeDasharray="3 3" stroke="#eee" />
-                  <XAxis 
-                    dataKey="lga" 
+                  <XAxis
+                    dataKey="lga"
                     angle={-45}
                     textAnchor="end"
                     height={90}
                     interval={0}
                     tick={{ fontSize: 12 }}
+                    padding={{ left: 10, right: 10 }}
                     domain={[lgaChartState.leftIndex, lgaChartState.rightIndex]}
                   />
-                  <YAxis 
-                    label={{ 
-                      value: 'Number of Teachers', 
-                      angle: -90, 
+                  <YAxis
+                    label={{
+                      value: 'Number of Teachers',
+                      angle: -90,
                       position: 'insideLeft',
-                      offset: -40,
+                      offset: -50,
                       style: { textAnchor: 'middle' }
                     }}
+                    tick={{ fontSize: 12 }}
                   />
-                  <Tooltip 
+                  <Tooltip
                     content={<CustomBarTooltip />}
                     cursor={{ fill: 'rgba(0, 0, 0, 0.05)' }}
                   />
-                  <Bar 
-                    dataKey="count" 
+                  <Bar
+                    dataKey="count"
                     fill="#8884d8"
                     minPointSize={2}
                     label={<CustomBarLabel />}
@@ -379,11 +384,12 @@ export default function TeacherStats({ teachers }: TeacherStatsProps) {
                       strokeOpacity={0.3}
                     />
                   ) : null}
-                  <Brush 
-                    dataKey="lga" 
-                    height={30} 
+                  <Brush
+                    dataKey="lga"
+                    height={30}
                     stroke="#8884d8"
                     travellerWidth={10}
+                    y={320}
                   />
                 </BarChart>
               </ResponsiveContainer>
@@ -404,7 +410,7 @@ export default function TeacherStats({ teachers }: TeacherStatsProps) {
           <CardContent className="p-4 sm:p-6 pt-0 h-[400px]">
             <ResponsiveChartContainer>
               <ResponsiveContainer width="100%" height="100%">
-                <PieChart margin={{ top: 20, right: 120, left: 20, bottom: 20 }}>
+                <PieChart margin={{ top: 20, right: 140, left: 20, bottom: 20 }}>
                   <Pie
                     data={subjectData}
                     dataKey="count"
@@ -413,28 +419,30 @@ export default function TeacherStats({ teachers }: TeacherStatsProps) {
                     cy="50%"
                     innerRadius={60}
                     outerRadius={100}
+                    labelLine={{ strokeWidth: 2 }}
                     activeIndex={activePieIndex}
                     activeShape={ActiveShape}
                     onMouseEnter={(_, index) => setActivePieIndex(index)}
                     onMouseLeave={() => setActivePieIndex(undefined)}
                   >
                     {subjectData.map((entry, index) => (
-                      <Cell 
-                        key={`cell-${index}`} 
+                      <Cell
+                        key={`cell-${index}`}
                         fill={COLORS[index % COLORS.length]}
                         stroke="#fff"
-                        strokeWidth={1}
+                        strokeWidth={2}
                       />
                     ))}
                   </Pie>
                   <Tooltip content={<CustomPieTooltip />} />
-                  <Legend 
-                    layout="vertical" 
+                  <Legend
+                    layout="vertical"
                     align="right"
                     verticalAlign="middle"
-                    wrapperStyle={{ 
+                    wrapperStyle={{
                       fontSize: '12px',
-                      paddingLeft: '20px',
+                      paddingLeft: '30px',
+                      lineHeight: '24px'
                     }}
                   />
                 </PieChart>
@@ -453,8 +461,8 @@ export default function TeacherStats({ teachers }: TeacherStatsProps) {
                   Teacher qualifications across the system
                 </p>
               </div>
-              <Button 
-                variant="outline" 
+              <Button
+                variant="outline"
                 size="sm"
                 onClick={() => resetZoom(setQualChartState)}
               >
@@ -465,38 +473,40 @@ export default function TeacherStats({ teachers }: TeacherStatsProps) {
           <CardContent className="p-4 sm:p-6 pt-0 h-[400px]">
             <ResponsiveChartContainer minHeight={400}>
               <ResponsiveContainer width="100%" height="100%">
-                <BarChart 
+                <BarChart
                   data={qualificationData}
-                  margin={{ top: 30, right: 30, left: 60, bottom: 90 }}
+                  margin={{ top: 30, right: 30, left: 70, bottom: 90 }}
                   onMouseDown={(e) => handleBarChartMouseDown(e, qualChartState, setQualChartState)}
                   onMouseMove={(e) => handleBarChartMouseMove(e, qualChartState, setQualChartState)}
                   onMouseUp={() => handleBarChartMouseUp(qualChartState, setQualChartState)}
                 >
                   <CartesianGrid strokeDasharray="3 3" stroke="#eee" />
-                  <XAxis 
-                    dataKey="qualification" 
+                  <XAxis
+                    dataKey="qualification"
                     angle={-45}
                     textAnchor="end"
                     height={90}
                     interval={0}
                     tick={{ fontSize: 12 }}
+                    padding={{ left: 10, right: 10 }}
                     domain={[qualChartState.leftIndex, qualChartState.rightIndex]}
                   />
-                  <YAxis 
-                    label={{ 
-                      value: 'Number of Teachers', 
-                      angle: -90, 
+                  <YAxis
+                    label={{
+                      value: 'Number of Teachers',
+                      angle: -90,
                       position: 'insideLeft',
-                      offset: -40,
+                      offset: -50,
                       style: { textAnchor: 'middle' }
                     }}
+                    tick={{ fontSize: 12 }}
                   />
-                  <Tooltip 
+                  <Tooltip
                     content={<CustomBarTooltip />}
                     cursor={{ fill: 'rgba(0, 0, 0, 0.05)' }}
                   />
-                  <Bar 
-                    dataKey="count" 
+                  <Bar
+                    dataKey="count"
                     fill="#82ca9d"
                     minPointSize={2}
                     label={<CustomBarLabel />}
@@ -508,11 +518,12 @@ export default function TeacherStats({ teachers }: TeacherStatsProps) {
                       strokeOpacity={0.3}
                     />
                   ) : null}
-                  <Brush 
-                    dataKey="qualification" 
-                    height={30} 
+                  <Brush
+                    dataKey="qualification"
+                    height={30}
                     stroke="#82ca9d"
                     travellerWidth={10}
+                    y={320}
                   />
                 </BarChart>
               </ResponsiveContainer>
