@@ -21,7 +21,7 @@ import {
   ReferenceArea,
 } from "recharts";
 import { Button } from "@/components/ui/button";
-import { ZoomIn, ZoomOut, RotateCcw } from "lucide-react";
+import { RotateCcw } from "lucide-react";
 import type { Teacher } from "@db/schema";
 import { useEffect, useState, useCallback } from "react";
 import { useResizeObserver } from "@/hooks/use-resize";
@@ -70,9 +70,37 @@ const CustomPieTooltip = ({ active, payload }: any) => {
   );
 };
 
-// Active shape component for pie chart zoom
+// Custom label component for bar charts
+const CustomBarLabel = ({ x, y, width, value }: any) => {
+  if (width < 30) return null; // Don't show labels if bars are too narrow
+
+  return (
+    <text
+      x={x + width / 2}
+      y={y - 8}
+      fill="#666"
+      textAnchor="middle"
+      fontSize={11}
+      dominantBaseline="middle"
+    >
+      {value}
+    </text>
+  );
+};
+
+// Active shape component for pie chart hover effect
 const ActiveShape = (props: any) => {
-  const { cx, cy, innerRadius, outerRadius, startAngle, endAngle, fill } = props;
+  const { cx, cy, midAngle, innerRadius, outerRadius, startAngle, endAngle, fill, payload, percent, value } = props;
+
+  const sin = Math.sin(-RADIAN * midAngle);
+  const cos = Math.cos(-RADIAN * midAngle);
+  const sx = cx + (outerRadius + 10) * cos;
+  const sy = cy + (outerRadius + 10) * sin;
+  const mx = cx + (outerRadius + 30) * cos;
+  const my = cy + (outerRadius + 30) * sin;
+  const ex = mx + (cos >= 0 ? 1 : -1) * 22;
+  const ey = my;
+  const textAnchor = cos >= 0 ? 'start' : 'end';
 
   return (
     <g>
@@ -80,7 +108,7 @@ const ActiveShape = (props: any) => {
         cx={cx}
         cy={cy}
         innerRadius={innerRadius}
-        outerRadius={outerRadius * 1.1} // Increase size for zoom effect
+        outerRadius={outerRadius}
         startAngle={startAngle}
         endAngle={endAngle}
         fill={fill}
@@ -94,6 +122,29 @@ const ActiveShape = (props: any) => {
         outerRadius={outerRadius + 10}
         fill={fill}
       />
+      <path
+        d={`M${sx},${sy}L${mx},${my}L${ex},${ey}`}
+        stroke={fill}
+        fill="none"
+      />
+      <circle cx={ex} cy={ey} r={2} fill={fill} stroke="none" />
+      <text
+        x={ex + (cos >= 0 ? 1 : -1) * 12}
+        y={ey}
+        textAnchor={textAnchor}
+        fill="#333"
+        fontSize={12}
+      >{`${payload.subject}`}</text>
+      <text
+        x={ex + (cos >= 0 ? 1 : -1) * 12}
+        y={ey}
+        dy={18}
+        textAnchor={textAnchor}
+        fill="#666"
+        fontSize={11}
+      >
+        {`${value} (${(percent * 100).toFixed(1)}%)`}
+      </text>
     </g>
   );
 };
@@ -180,7 +231,7 @@ export default function TeacherStats({ teachers }: TeacherStatsProps) {
 
   const qualificationData = Object.entries(qualificationCounts)
     .map(([qualification, count]) => ({
-      qualification: qualification.length > 25 ? qualification.substring(0, 25) + "..." : qualification,
+      qualification: qualification.length > 30 ? qualification.substring(0, 30) + "..." : qualification,
       count,
       total: totalTeachers,
       percentage: (count / totalTeachers * 100).toFixed(1),
@@ -254,7 +305,12 @@ export default function TeacherStats({ teachers }: TeacherStatsProps) {
         <Card className="col-span-1">
           <CardHeader className="p-4 sm:p-6">
             <div className="flex justify-between items-center">
-              <CardTitle className="text-base sm:text-lg">Teachers by LGA</CardTitle>
+              <div>
+                <CardTitle className="text-base sm:text-lg">Teachers by LGA</CardTitle>
+                <p className="text-sm text-muted-foreground mt-1">
+                  Distribution of teachers across Local Government Areas
+                </p>
+              </div>
               <Button 
                 variant="outline" 
                 size="sm"
@@ -269,22 +325,29 @@ export default function TeacherStats({ teachers }: TeacherStatsProps) {
               <ResponsiveContainer width="100%" height="100%">
                 <BarChart 
                   data={lgaData}
-                  margin={{ top: 30, right: 30, left: 20, bottom: 70 }}
+                  margin={{ top: 30, right: 30, left: 20, bottom: 90 }}
                   onMouseDown={(e) => handleBarChartMouseDown(e, lgaChartState, setLgaChartState)}
                   onMouseMove={(e) => handleBarChartMouseMove(e, lgaChartState, setLgaChartState)}
                   onMouseUp={() => handleBarChartMouseUp(lgaChartState, setLgaChartState)}
                 >
-                  <CartesianGrid strokeDasharray="3 3" />
+                  <CartesianGrid strokeDasharray="3 3" stroke="#eee" />
                   <XAxis 
                     dataKey="lga" 
                     angle={-45}
                     textAnchor="end"
-                    height={70}
+                    height={90}
                     interval={0}
                     tick={{ fontSize: 12 }}
                     domain={[lgaChartState.leftIndex, lgaChartState.rightIndex]}
                   />
-                  <YAxis />
+                  <YAxis 
+                    label={{ 
+                      value: 'Number of Teachers', 
+                      angle: -90, 
+                      position: 'insideLeft',
+                      style: { textAnchor: 'middle' }
+                    }}
+                  />
                   <Tooltip 
                     content={<CustomBarTooltip />}
                     cursor={{ fill: 'rgba(0, 0, 0, 0.05)' }}
@@ -293,6 +356,7 @@ export default function TeacherStats({ teachers }: TeacherStatsProps) {
                     dataKey="count" 
                     fill="#8884d8"
                     minPointSize={2}
+                    label={<CustomBarLabel />}
                   />
                   {lgaChartState.refAreaLeft && lgaChartState.refAreaRight ? (
                     <ReferenceArea
@@ -301,7 +365,12 @@ export default function TeacherStats({ teachers }: TeacherStatsProps) {
                       strokeOpacity={0.3}
                     />
                   ) : null}
-                  <Brush dataKey="lga" height={30} stroke="#8884d8" />
+                  <Brush 
+                    dataKey="lga" 
+                    height={30} 
+                    stroke="#8884d8"
+                    travellerWidth={10}
+                  />
                 </BarChart>
               </ResponsiveContainer>
             </ResponsiveChartContainer>
@@ -311,18 +380,24 @@ export default function TeacherStats({ teachers }: TeacherStatsProps) {
         {/* Subject Distribution */}
         <Card className="col-span-1">
           <CardHeader className="p-4 sm:p-6">
-            <CardTitle className="text-base sm:text-lg">Subject Distribution</CardTitle>
+            <div>
+              <CardTitle className="text-base sm:text-lg">Subject Distribution</CardTitle>
+              <p className="text-sm text-muted-foreground mt-1">
+                Top subjects taught across all schools
+              </p>
+            </div>
           </CardHeader>
           <CardContent className="p-4 sm:p-6 pt-0">
             <ResponsiveChartContainer>
               <ResponsiveContainer width="100%" height="100%">
-                <PieChart margin={{ top: 20, right: 80, left: 20, bottom: 20 }}>
+                <PieChart margin={{ top: 20, right: 100, left: 20, bottom: 20 }}>
                   <Pie
                     data={subjectData}
                     dataKey="count"
                     nameKey="subject"
                     cx="50%"
                     cy="50%"
+                    innerRadius={60}
                     outerRadius={80}
                     activeIndex={activePieIndex}
                     activeShape={ActiveShape}
@@ -330,7 +405,12 @@ export default function TeacherStats({ teachers }: TeacherStatsProps) {
                     onMouseLeave={() => setActivePieIndex(undefined)}
                   >
                     {subjectData.map((entry, index) => (
-                      <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                      <Cell 
+                        key={`cell-${index}`} 
+                        fill={COLORS[index % COLORS.length]}
+                        stroke="#fff"
+                        strokeWidth={1}
+                      />
                     ))}
                   </Pie>
                   <Tooltip 
@@ -355,7 +435,12 @@ export default function TeacherStats({ teachers }: TeacherStatsProps) {
         <Card className="col-span-1 lg:col-span-2">
           <CardHeader className="p-4 sm:p-6">
             <div className="flex justify-between items-center">
-              <CardTitle className="text-base sm:text-lg">Qualification Distribution</CardTitle>
+              <div>
+                <CardTitle className="text-base sm:text-lg">Qualification Distribution</CardTitle>
+                <p className="text-sm text-muted-foreground mt-1">
+                  Teacher qualifications across the system
+                </p>
+              </div>
               <Button 
                 variant="outline" 
                 size="sm"
@@ -370,22 +455,29 @@ export default function TeacherStats({ teachers }: TeacherStatsProps) {
               <ResponsiveContainer width="100%" height="100%">
                 <BarChart 
                   data={qualificationData}
-                  margin={{ top: 30, right: 30, left: 20, bottom: 70 }}
+                  margin={{ top: 30, right: 30, left: 40, bottom: 90 }}
                   onMouseDown={(e) => handleBarChartMouseDown(e, qualChartState, setQualChartState)}
                   onMouseMove={(e) => handleBarChartMouseMove(e, qualChartState, setQualChartState)}
                   onMouseUp={() => handleBarChartMouseUp(qualChartState, setQualChartState)}
                 >
-                  <CartesianGrid strokeDasharray="3 3" />
+                  <CartesianGrid strokeDasharray="3 3" stroke="#eee" />
                   <XAxis 
                     dataKey="qualification" 
                     angle={-45}
                     textAnchor="end"
-                    height={70}
+                    height={90}
                     interval={0}
                     tick={{ fontSize: 12 }}
                     domain={[qualChartState.leftIndex, qualChartState.rightIndex]}
                   />
-                  <YAxis />
+                  <YAxis 
+                    label={{ 
+                      value: 'Number of Teachers', 
+                      angle: -90, 
+                      position: 'insideLeft',
+                      style: { textAnchor: 'middle' }
+                    }}
+                  />
                   <Tooltip 
                     content={<CustomBarTooltip />}
                     cursor={{ fill: 'rgba(0, 0, 0, 0.05)' }}
@@ -394,6 +486,7 @@ export default function TeacherStats({ teachers }: TeacherStatsProps) {
                     dataKey="count" 
                     fill="#82ca9d"
                     minPointSize={2}
+                    label={<CustomBarLabel />}
                   />
                   {qualChartState.refAreaLeft && qualChartState.refAreaRight ? (
                     <ReferenceArea
@@ -402,7 +495,12 @@ export default function TeacherStats({ teachers }: TeacherStatsProps) {
                       strokeOpacity={0.3}
                     />
                   ) : null}
-                  <Brush dataKey="qualification" height={30} stroke="#82ca9d" />
+                  <Brush 
+                    dataKey="qualification" 
+                    height={30} 
+                    stroke="#82ca9d"
+                    travellerWidth={10}
+                  />
                 </BarChart>
               </ResponsiveContainer>
             </ResponsiveChartContainer>
