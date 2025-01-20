@@ -72,11 +72,26 @@ export default function TeacherStats({ teachers }: TeacherStatsProps) {
 
   const qualificationData = Object.entries(qualificationCounts)
     .map(([qualification, count]) => ({
-      qualification,
+      qualification: qualification.length > 20 ? qualification.substring(0, 20) + "..." : qualification,
       count,
       percentage: (count / totalTeachers * 100).toFixed(1),
     }))
     .sort((a, b) => b.count - a.count);
+
+  const CustomizedLabel = ({ x, y, fill, value }: any) => {
+    return (
+      <text 
+        x={x} 
+        y={y} 
+        dy={-4}
+        fontSize={12} 
+        fill={fill} 
+        textAnchor="middle"
+      >
+        {value}
+      </text>
+    );
+  };
 
   return (
     <>
@@ -98,15 +113,29 @@ export default function TeacherStats({ teachers }: TeacherStatsProps) {
           </CardHeader>
           <CardContent className="h-[300px]">
             <ResponsiveContainer width="100%" height="100%">
-              <BarChart data={lgaData}>
+              <BarChart 
+                data={lgaData}
+                margin={{ top: 20, right: 30, left: 20, bottom: 60 }}
+              >
                 <CartesianGrid strokeDasharray="3 3" />
-                <XAxis dataKey="lga" />
+                <XAxis 
+                  dataKey="lga" 
+                  angle={-45}
+                  textAnchor="end"
+                  height={60}
+                  interval={0}
+                  tick={{ fontSize: 12 }}
+                />
                 <YAxis />
                 <Tooltip 
                   formatter={(value, name) => [`${value} teachers`, name]}
                   labelFormatter={(label) => `LGA: ${label}`}
                 />
-                <Bar dataKey="count" fill="#8884d8" />
+                <Bar 
+                  dataKey="count" 
+                  fill="#8884d8"
+                  label={<CustomizedLabel />}
+                />
               </BarChart>
             </ResponsiveContainer>
           </CardContent>
@@ -118,7 +147,7 @@ export default function TeacherStats({ teachers }: TeacherStatsProps) {
           </CardHeader>
           <CardContent className="h-[300px]">
             <ResponsiveContainer width="100%" height="100%">
-              <PieChart>
+              <PieChart margin={{ top: 20, right: 30, left: 20, bottom: 20 }}>
                 <Pie
                   data={subjectData}
                   dataKey="count"
@@ -127,13 +156,19 @@ export default function TeacherStats({ teachers }: TeacherStatsProps) {
                   cy="50%"
                   outerRadius={80}
                   label={({ subject, percentage }) => `${subject} (${percentage}%)`}
+                  labelLine={{ strokeWidth: 1, stroke: '#888' }}
                 >
                   {subjectData.map((entry, index) => (
                     <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
                   ))}
                 </Pie>
                 <Tooltip />
-                <Legend />
+                <Legend 
+                  layout="vertical" 
+                  align="right"
+                  verticalAlign="middle"
+                  wrapperStyle={{ fontSize: '12px' }}
+                />
               </PieChart>
             </ResponsiveContainer>
           </CardContent>
@@ -145,15 +180,29 @@ export default function TeacherStats({ teachers }: TeacherStatsProps) {
           </CardHeader>
           <CardContent className="h-[300px]">
             <ResponsiveContainer width="100%" height="100%">
-              <BarChart data={qualificationData}>
+              <BarChart 
+                data={qualificationData}
+                margin={{ top: 20, right: 30, left: 20, bottom: 60 }}
+              >
                 <CartesianGrid strokeDasharray="3 3" />
-                <XAxis dataKey="qualification" />
+                <XAxis 
+                  dataKey="qualification" 
+                  angle={-45}
+                  textAnchor="end"
+                  height={60}
+                  interval={0}
+                  tick={{ fontSize: 12 }}
+                />
                 <YAxis />
                 <Tooltip 
                   formatter={(value, name) => [`${value} teachers`, name]}
                   labelFormatter={(label) => `Qualification: ${label}`}
                 />
-                <Bar dataKey="count" fill="#82ca9d" />
+                <Bar 
+                  dataKey="count" 
+                  fill="#82ca9d"
+                  label={<CustomizedLabel />}
+                />
               </BarChart>
             </ResponsiveContainer>
           </CardContent>
