@@ -1,0 +1,25 @@
+The current issue is that the charts only occupy a small portion of the screen, and parts of the chart content (such as labels, axis titles, or legends) are hidden or cut off within the margins of the chart boxes. This results in poor visibility and usability of the charts.
+
+Additionally, the chart boxes are not responsive to changes in screen size or layout. As a result:
+
+The charts do not dynamically adjust to fill the available space within their containers.
+The content within the charts (e.g., labels, legends, axes) does not scale properly or reposition itself to remain fully visible when the box size changes.
+This lack of responsiveness and hidden content affects the readability and overall user experience, especially on devices with varying screen sizes.
+
+Problem Description for Fix Request:
+"The charts currently take up only a small portion of the available screen space, and parts of the chart content (e.g., labels, legends, axis titles) are hidden or cut off within the margins of their respective chart boxes. The chart boxes are not responsive, meaning they do not dynamically adjust their size or scale the chart content appropriately when the screen size or layout changes.
+
+Please implement the following improvements:
+
+Responsive Chart Boxes:
+
+Ensure that the chart boxes dynamically resize to fill the available space in their containers while maintaining an appropriate aspect ratio.
+Prevent any part of the chart content from being hidden or cut off within the margins of the boxes, regardless of the size.
+Responsive Chart Content:
+
+Make all elements of the chart (e.g., axis labels, titles, legends) responsive so they scale proportionally with the size of the chart.
+Ensure that labels, legends, and other elements remain fully visible and adjust their positioning dynamically within the resized boxes.
+Optimized Layout:
+
+Avoid excessive white space in the chart boxes by adjusting the layout to fit the data effectively within the available area.
+Ensure the charts remain visually clear and usable on different screen sizes, including desktops, tablets, and mobile devices."

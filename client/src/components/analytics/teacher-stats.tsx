@@ -149,15 +149,28 @@ const ActiveShape = (props: any) => {
   );
 };
 
-// Responsive chart container component
+// Responsive chart container component with improved sizing
 const ResponsiveChartContainer = ({ children, minHeight = 300 }: { children: React.ReactNode, minHeight?: number }) => {
   const [ref, setRef] = useState<HTMLDivElement | null>(null);
   const dimensions = useResizeObserver(ref);
 
   return (
-    <div ref={setRef} className="w-full" style={{ minHeight }}>
+    <div 
+      ref={setRef} 
+      className="w-full" 
+      style={{ 
+        minHeight,
+        height: '100%',
+        maxHeight: '600px' // Prevent excessive height on large screens
+      }}
+    >
       {dimensions && (
-        <div style={{ width: dimensions.width, height: Math.max(minHeight, dimensions.height) }}>
+        <div 
+          style={{ 
+            width: '100%',
+            height: Math.max(minHeight, Math.min(dimensions.height, 600))
+          }}
+        >
           {children}
         </div>
       )}
@@ -286,7 +299,7 @@ export default function TeacherStats({ teachers }: TeacherStatsProps) {
   };
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 p-4 sm:p-6">
       {/* Summary Cards */}
       <div className="grid gap-4 sm:gap-6 grid-cols-1 sm:grid-cols-2 lg:grid-cols-4">
         <Card className="col-span-1">
@@ -299,10 +312,10 @@ export default function TeacherStats({ teachers }: TeacherStatsProps) {
         </Card>
       </div>
 
-      {/* Charts Grid */}
-      <div className="grid gap-4 sm:gap-6 grid-cols-1 lg:grid-cols-2">
+      {/* Charts Grid with improved spacing and layout */}
+      <div className="grid gap-6 grid-cols-1 lg:grid-cols-2">
         {/* LGA Distribution */}
-        <Card className="col-span-1">
+        <Card className="col-span-1 min-h-[500px]">
           <CardHeader className="p-4 sm:p-6">
             <div className="flex justify-between items-center">
               <div>
@@ -320,12 +333,12 @@ export default function TeacherStats({ teachers }: TeacherStatsProps) {
               </Button>
             </div>
           </CardHeader>
-          <CardContent className="p-4 sm:p-6 pt-0">
+          <CardContent className="p-4 sm:p-6 pt-0 h-[400px]">
             <ResponsiveChartContainer>
               <ResponsiveContainer width="100%" height="100%">
                 <BarChart 
                   data={lgaData}
-                  margin={{ top: 30, right: 30, left: 20, bottom: 90 }}
+                  margin={{ top: 30, right: 30, left: 60, bottom: 90 }}
                   onMouseDown={(e) => handleBarChartMouseDown(e, lgaChartState, setLgaChartState)}
                   onMouseMove={(e) => handleBarChartMouseMove(e, lgaChartState, setLgaChartState)}
                   onMouseUp={() => handleBarChartMouseUp(lgaChartState, setLgaChartState)}
@@ -345,6 +358,7 @@ export default function TeacherStats({ teachers }: TeacherStatsProps) {
                       value: 'Number of Teachers', 
                       angle: -90, 
                       position: 'insideLeft',
+                      offset: -40,
                       style: { textAnchor: 'middle' }
                     }}
                   />
@@ -378,7 +392,7 @@ export default function TeacherStats({ teachers }: TeacherStatsProps) {
         </Card>
 
         {/* Subject Distribution */}
-        <Card className="col-span-1">
+        <Card className="col-span-1 min-h-[500px]">
           <CardHeader className="p-4 sm:p-6">
             <div>
               <CardTitle className="text-base sm:text-lg">Subject Distribution</CardTitle>
@@ -387,10 +401,10 @@ export default function TeacherStats({ teachers }: TeacherStatsProps) {
               </p>
             </div>
           </CardHeader>
-          <CardContent className="p-4 sm:p-6 pt-0">
+          <CardContent className="p-4 sm:p-6 pt-0 h-[400px]">
             <ResponsiveChartContainer>
               <ResponsiveContainer width="100%" height="100%">
-                <PieChart margin={{ top: 20, right: 100, left: 20, bottom: 20 }}>
+                <PieChart margin={{ top: 20, right: 120, left: 20, bottom: 20 }}>
                   <Pie
                     data={subjectData}
                     dataKey="count"
@@ -398,7 +412,7 @@ export default function TeacherStats({ teachers }: TeacherStatsProps) {
                     cx="50%"
                     cy="50%"
                     innerRadius={60}
-                    outerRadius={80}
+                    outerRadius={100}
                     activeIndex={activePieIndex}
                     activeShape={ActiveShape}
                     onMouseEnter={(_, index) => setActivePieIndex(index)}
@@ -413,9 +427,7 @@ export default function TeacherStats({ teachers }: TeacherStatsProps) {
                       />
                     ))}
                   </Pie>
-                  <Tooltip 
-                    content={<CustomPieTooltip />}
-                  />
+                  <Tooltip content={<CustomPieTooltip />} />
                   <Legend 
                     layout="vertical" 
                     align="right"
@@ -432,7 +444,7 @@ export default function TeacherStats({ teachers }: TeacherStatsProps) {
         </Card>
 
         {/* Qualification Distribution */}
-        <Card className="col-span-1 lg:col-span-2">
+        <Card className="col-span-1 lg:col-span-2 min-h-[500px]">
           <CardHeader className="p-4 sm:p-6">
             <div className="flex justify-between items-center">
               <div>
@@ -450,12 +462,12 @@ export default function TeacherStats({ teachers }: TeacherStatsProps) {
               </Button>
             </div>
           </CardHeader>
-          <CardContent className="p-4 sm:p-6 pt-0">
+          <CardContent className="p-4 sm:p-6 pt-0 h-[400px]">
             <ResponsiveChartContainer minHeight={400}>
               <ResponsiveContainer width="100%" height="100%">
                 <BarChart 
                   data={qualificationData}
-                  margin={{ top: 30, right: 30, left: 40, bottom: 90 }}
+                  margin={{ top: 30, right: 30, left: 60, bottom: 90 }}
                   onMouseDown={(e) => handleBarChartMouseDown(e, qualChartState, setQualChartState)}
                   onMouseMove={(e) => handleBarChartMouseMove(e, qualChartState, setQualChartState)}
                   onMouseUp={() => handleBarChartMouseUp(qualChartState, setQualChartState)}
@@ -475,6 +487,7 @@ export default function TeacherStats({ teachers }: TeacherStatsProps) {
                       value: 'Number of Teachers', 
                       angle: -90, 
                       position: 'insideLeft',
+                      offset: -40,
                       style: { textAnchor: 'middle' }
                     }}
                   />
