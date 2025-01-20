@@ -10,6 +10,7 @@ import { useToast } from "@/hooks/use-toast";
 import Navigation from "@/components/layout/navigation";
 import DocumentUpload from "@/components/forms/document-upload";
 import type { Teacher } from "@db/schema";
+import TeacherQRCode from "@/components/teacher/qr-code";
 
 // Omit the auto-generated fields and userId from the form data
 type TeacherFormData = Omit<Teacher, 'id' | 'createdAt' | 'updatedAt' | 'userId'>;
@@ -185,11 +186,18 @@ export default function TeacherForm() {
               </div>
             </form>
 
-            {/* Only show document upload section when editing a teacher */}
             {isEditing && (
-              <div className="mt-8 pt-8 border-t">
-                <DocumentUpload teacherId={teacherId} />
-              </div>
+              <>
+                <div className="mt-8 pt-8 border-t">
+                  <DocumentUpload teacherId={teacherId} />
+                </div>
+                <div className="mt-8 pt-8 border-t">
+                  <TeacherQRCode 
+                    teacherId={teacherId} 
+                    teacherName={teacher?.name || ""} 
+                  />
+                </div>
+              </>
             )}
           </CardContent>
         </Card>
