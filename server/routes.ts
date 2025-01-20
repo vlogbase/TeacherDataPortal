@@ -29,6 +29,29 @@ export function registerRoutes(app: Express): Server {
     res.status(403).send("Not authorized");
   };
 
+  // Create new teacher
+  app.post("/api/teachers", requireAuth, async (req, res) => {
+    try {
+      const teacherData = {
+        ...req.body,
+        employmentDate: new Date(req.body.employmentDate),
+        createdAt: new Date(),
+        updatedAt: new Date(),
+        userId: req.user.id,
+      };
+
+      const [newTeacher] = await db
+        .insert(teachers)
+        .values(teacherData)
+        .returning();
+
+      res.status(201).json(newTeacher);
+    } catch (error) {
+      console.error("Teacher creation error:", error);
+      res.status(500).json({ error: "Failed to create teacher" });
+    }
+  });
+
   // Get all teachers
   app.get("/api/teachers", requireAuth, async (req, res) => {
     try {
@@ -55,23 +78,6 @@ export function registerRoutes(app: Express): Server {
       res.json(teacher);
     } catch (error) {
       res.status(500).json({ error: "Failed to fetch teacher" });
-    }
-  });
-
-  // Create new teacher
-  app.post("/api/teachers", requireAuth, async (req, res) => {
-    try {
-      const [newTeacher] = await db
-        .insert(teachers)
-        .values({
-          ...req.body,
-          userId: req.user.id,
-        })
-        .returning();
-
-      res.status(201).json(newTeacher);
-    } catch (error) {
-      res.status(500).json({ error: "Failed to create teacher" });
     }
   });
 
