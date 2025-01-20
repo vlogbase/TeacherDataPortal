@@ -1,4 +1,4 @@
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 import { useLocation } from "wouter";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
@@ -6,12 +6,21 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
 import Navigation from "@/components/layout/navigation";
 import DocumentUpload from "@/components/forms/document-upload";
+import { MultiSelect } from "@/components/ui/multi-select";
 import type { Teacher } from "@db/schema";
 import TeacherQRCode from "@/components/teacher/qr-code";
 import SocialShare from "@/components/teacher/social-share";
+import { QUALIFICATIONS, SUBJECTS, SCHOOLS, LGAS } from "@/lib/constants";
 
 // Omit the auto-generated fields and userId from the form data
 type TeacherFormData = Omit<Teacher, 'id' | 'createdAt' | 'updatedAt' | 'userId'>;
@@ -22,7 +31,7 @@ export default function TeacherForm() {
   const queryClient = useQueryClient();
 
   // Extract teacher ID from URL if editing
-  const teacherId = location.includes("/edit-teacher/") 
+  const teacherId = location.includes("/edit-teacher/")
     ? parseInt(location.split("/edit-teacher/")[1])
     : null;
 
@@ -46,6 +55,10 @@ export default function TeacherForm() {
     enabled: isEditing,
   });
 
+  // State for multi-select values
+  const [selectedQualifications, setSelectedQualifications] = useState<string[]>([]);
+  const [selectedSubjects, setSelectedSubjects] = useState<string[]>([]);
+
   // Populate form with teacher data when available
   useEffect(() => {
     if (teacher) {
@@ -53,12 +66,20 @@ export default function TeacherForm() {
         ...teacher,
         employmentDate: new Date(teacher.employmentDate).toISOString().split('T')[0],
       });
+      setSelectedQualifications(teacher.qualifications.split(",").map(q => q.trim()));
+      setSelectedSubjects(teacher.subjectsTaught.split(",").map(s => s.trim()));
     }
   }, [teacher, form]);
 
   // Handle form submission
   const mutation = useMutation({
     mutationFn: async (data: TeacherFormData) => {
+      const formattedData = {
+        ...data,
+        qualifications: selectedQualifications.join(", "),
+        subjectsTaught: selectedSubjects.join(", "),
+      };
+
       const response = await fetch(
         isEditing ? `/api/teachers/${teacherId}` : "/api/teachers",
         {
@@ -67,7 +88,7 @@ export default function TeacherForm() {
             "Content-Type": "application/json",
           },
           body: JSON.stringify({
-            ...data,
+            ...formattedData,
             employmentDate: new Date(data.employmentDate),
           }),
           credentials: "include",
@@ -111,8 +132,8 @@ export default function TeacherForm() {
             <div className="flex justify-between items-center">
               <CardTitle>{isEditing ? "Edit Teacher" : "Add New Teacher"}</CardTitle>
               {isEditing && (
-                <SocialShare 
-                  teacherId={teacherId} 
+                <SocialShare
+                  teacherId={teacherId}
                   teacherName={teacher?.name || ""}
                   achievements={teacher?.qualifications}
                 />
@@ -141,35 +162,60 @@ export default function TeacherForm() {
 
                 <div className="space-y-2">
                   <Label htmlFor="qualifications">Qualifications</Label>
-                  <Input
-                    id="qualifications"
-                    {...form.register("qualifications", { required: true })}
+                  <MultiSelect
+                    options={QUALIFICATIONS}
+                    selected={selectedQualifications}
+                    onChange={setSelectedQualifications}
+                    placeholder="Select qualifications..."
                   />
                 </div>
 
                 <div className="space-y-2">
                   <Label htmlFor="subjects">Subjects Taught</Label>
-                  <Input
-                    id="subjects"
-                    placeholder="Separate subjects with commas"
-                    {...form.register("subjectsTaught", { required: true })}
+                  <MultiSelect
+                    options={SUBJECTS}
+                    selected={selectedSubjects}
+                    onChange={setSelectedSubjects}
+                    placeholder="Select subjects..."
                   />
                 </div>
 
                 <div className="space-y-2">
                   <Label htmlFor="school">School</Label>
-                  <Input
-                    id="school"
-                    {...form.register("school", { required: true })}
-                  />
+                  <Select
+                    value={form.watch("school")}
+                    onValueChange={(value) => form.setValue("school", value)}
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select a school" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {SCHOOLS.map((school) => (
+                        <SelectItem key={school} value={school}>
+                          {school}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
                 </div>
 
                 <div className="space-y-2">
                   <Label htmlFor="lga">LGA</Label>
-                  <Input
-                    id="lga"
-                    {...form.register("lga", { required: true })}
-                  />
+                  <Select
+                    value={form.watch("lga")}
+                    onValueChange={(value) => form.setValue("lga", value)}
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select an LGA" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {LGAS.map((lga) => (
+                        <SelectItem key={lga} value={lga}>
+                          {lga}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
                 </div>
 
                 <div className="space-y-2">
@@ -183,9 +229,9 @@ export default function TeacherForm() {
               </div>
 
               <div className="flex gap-4 justify-end">
-                <Button 
-                  type="button" 
-                  variant="outline" 
+                <Button
+                  type="button"
+                  variant="outline"
                   onClick={() => navigate("/")}
                 >
                   Cancel
@@ -202,9 +248,9 @@ export default function TeacherForm() {
                   <DocumentUpload teacherId={teacherId} />
                 </div>
                 <div className="mt-8 pt-8 border-t">
-                  <TeacherQRCode 
-                    teacherId={teacherId} 
-                    teacherName={teacher?.name || ""} 
+                  <TeacherQRCode
+                    teacherId={teacherId}
+                    teacherName={teacher?.name || ""}
                   />
                 </div>
               </>
