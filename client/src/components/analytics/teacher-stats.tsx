@@ -27,6 +27,43 @@ type TeacherStatsProps = {
 const COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042', '#8884d8'];
 const RADIAN = Math.PI / 180;
 
+// Custom tooltip for bar charts
+const CustomBarTooltip = ({ active, payload, label }: any) => {
+  if (!active || !payload?.length) return null;
+
+  return (
+    <div className="bg-white p-3 rounded-lg shadow-lg border border-gray-200">
+      <p className="font-medium text-sm mb-1">{label}</p>
+      <p className="text-sm text-gray-600">
+        Teachers: <span className="font-medium">{payload[0].value}</span>
+      </p>
+      <p className="text-sm text-gray-600">
+        Percentage: <span className="font-medium">
+          {((payload[0].value / payload[0].payload.total) * 100).toFixed(1)}%
+        </span>
+      </p>
+    </div>
+  );
+};
+
+// Custom tooltip for pie chart
+const CustomPieTooltip = ({ active, payload }: any) => {
+  if (!active || !payload?.length) return null;
+
+  const data = payload[0].payload;
+  return (
+    <div className="bg-white p-3 rounded-lg shadow-lg border border-gray-200">
+      <p className="font-medium text-sm mb-1">{data.subject}</p>
+      <p className="text-sm text-gray-600">
+        Teachers: <span className="font-medium">{data.count}</span>
+      </p>
+      <p className="text-sm text-gray-600">
+        Percentage: <span className="font-medium">{data.percentage}%</span>
+      </p>
+    </div>
+  );
+};
+
 // Custom label component for bar charts with smart positioning
 const CustomBarLabel = ({ x, y, width, value, viewBox }: any) => {
   // Calculate position to avoid overlaps
@@ -107,6 +144,7 @@ export default function TeacherStats({ teachers }: TeacherStatsProps) {
   const lgaData = Object.entries(teachersByLGA).map(([lga, count]) => ({
     lga,
     count,
+    total: totalTeachers,
     percentage: (count / totalTeachers * 100).toFixed(1),
   }));
 
@@ -124,6 +162,7 @@ export default function TeacherStats({ teachers }: TeacherStatsProps) {
     .map(([subject, count]) => ({
       subject,
       count,
+      total: totalTeachers,
       percentage: (count / totalTeachers * 100).toFixed(1),
     }))
     .sort((a, b) => b.count - a.count)
@@ -143,6 +182,7 @@ export default function TeacherStats({ teachers }: TeacherStatsProps) {
     .map(([qualification, count]) => ({
       qualification: qualification.length > 25 ? qualification.substring(0, 25) + "..." : qualification,
       count,
+      total: totalTeachers,
       percentage: (count / totalTeachers * 100).toFixed(1),
     }))
     .sort((a, b) => b.count - a.count);
@@ -182,8 +222,8 @@ export default function TeacherStats({ teachers }: TeacherStatsProps) {
                 />
                 <YAxis />
                 <Tooltip 
-                  formatter={(value, name) => [`${value} teachers`, name]}
-                  labelFormatter={(label) => `LGA: ${label}`}
+                  content={<CustomBarTooltip />}
+                  cursor={{ fill: 'rgba(0, 0, 0, 0.05)' }}
                 />
                 <Bar 
                   dataKey="count" 
@@ -217,7 +257,9 @@ export default function TeacherStats({ teachers }: TeacherStatsProps) {
                     <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
                   ))}
                 </Pie>
-                <Tooltip />
+                <Tooltip 
+                  content={<CustomPieTooltip />}
+                />
                 <Legend 
                   layout="vertical" 
                   align="right"
@@ -253,8 +295,8 @@ export default function TeacherStats({ teachers }: TeacherStatsProps) {
                 />
                 <YAxis />
                 <Tooltip 
-                  formatter={(value, name) => [`${value} teachers`, name]}
-                  labelFormatter={(label) => `Qualification: ${label}`}
+                  content={<CustomBarTooltip />}
+                  cursor={{ fill: 'rgba(0, 0, 0, 0.05)' }}
                 />
                 <Bar 
                   dataKey="count" 
