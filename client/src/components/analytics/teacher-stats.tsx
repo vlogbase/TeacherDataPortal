@@ -125,16 +125,16 @@ export default function TeacherStats({ teachers }: TeacherStatsProps) {
           <CardHeader>
             <CardTitle>Teachers by LGA</CardTitle>
           </CardHeader>
-          <CardContent>
-            <div className="w-full h-[400px]">
+          <CardContent className="pt-0">
+            <div className="w-full h-[450px] p-4">
               <ResponsiveContainer width="100%" height="100%">
                 <BarChart
                   data={lgaData}
                   margin={{
                     top: 20,
                     right: 30,
-                    left: 40,
-                    bottom: 60
+                    left: 60,
+                    bottom: 90
                   }}
                 >
                   <CartesianGrid strokeDasharray="3 3" />
@@ -142,7 +142,7 @@ export default function TeacherStats({ teachers }: TeacherStatsProps) {
                     dataKey="lga"
                     angle={-45}
                     textAnchor="end"
-                    height={60}
+                    height={80}
                     interval={0}
                     tick={{ fontSize: 12 }}
                   />
@@ -151,8 +151,9 @@ export default function TeacherStats({ teachers }: TeacherStatsProps) {
                       value: 'Number of Teachers',
                       angle: -90,
                       position: 'insideLeft',
-                      offset: -20
+                      offset: -40
                     }}
+                    tick={{ fontSize: 12 }}
                   />
                   <Tooltip content={<CustomBarTooltip />} />
                   <Bar dataKey="count" fill="#2D6A4F" />
@@ -167,26 +168,37 @@ export default function TeacherStats({ teachers }: TeacherStatsProps) {
           <CardHeader>
             <CardTitle>Subject Distribution</CardTitle>
           </CardHeader>
-          <CardContent>
-            <div className="w-full h-[400px]">
+          <CardContent className="pt-0">
+            <div className="w-full h-[450px] p-4">
               <ResponsiveContainer width="100%" height="100%">
-                <PieChart>
+                <PieChart margin={{ top: 20, right: 20, bottom: 20, left: 20 }}>
                   <Pie
                     data={subjectData}
                     cx="50%"
                     cy="50%"
-                    labelLine={false}
-                    outerRadius={140}
+                    labelLine={true}
+                    outerRadius={130}
                     fill="#8884d8"
                     dataKey="value"
                     label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}
                   >
                     {subjectData.map((entry, index) => (
-                      <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                      <Cell 
+                        key={`cell-${index}`} 
+                        fill={COLORS[index % COLORS.length]}
+                        strokeWidth={2}
+                      />
                     ))}
                   </Pie>
                   <Tooltip content={<CustomPieTooltip />} />
-                  <Legend />
+                  <Legend
+                    layout="horizontal"
+                    align="center"
+                    verticalAlign="bottom"
+                    wrapperStyle={{
+                      paddingTop: '20px'
+                    }}
+                  />
                 </PieChart>
               </ResponsiveContainer>
             </div>
@@ -198,16 +210,16 @@ export default function TeacherStats({ teachers }: TeacherStatsProps) {
           <CardHeader>
             <CardTitle>Qualification Distribution</CardTitle>
           </CardHeader>
-          <CardContent>
-            <div className="w-full h-[400px]">
+          <CardContent className="pt-0">
+            <div className="w-full h-[450px] p-4">
               <ResponsiveContainer width="100%" height="100%">
                 <BarChart
                   data={qualificationData}
                   margin={{
                     top: 20,
                     right: 30,
-                    left: 40,
-                    bottom: 60
+                    left: 60,
+                    bottom: 90
                   }}
                 >
                   <CartesianGrid strokeDasharray="3 3" />
@@ -215,7 +227,7 @@ export default function TeacherStats({ teachers }: TeacherStatsProps) {
                     dataKey="qualification"
                     angle={-45}
                     textAnchor="end"
-                    height={60}
+                    height={80}
                     interval={0}
                     tick={{ fontSize: 12 }}
                   />
@@ -224,8 +236,9 @@ export default function TeacherStats({ teachers }: TeacherStatsProps) {
                       value: 'Number of Teachers',
                       angle: -90,
                       position: 'insideLeft',
-                      offset: -20
+                      offset: -40
                     }}
+                    tick={{ fontSize: 12 }}
                   />
                   <Tooltip content={<CustomBarTooltip />} />
                   <Bar dataKey="count" fill="#82ca9d" />

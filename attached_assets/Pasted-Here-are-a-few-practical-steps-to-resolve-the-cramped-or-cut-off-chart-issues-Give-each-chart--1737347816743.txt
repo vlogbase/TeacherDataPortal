@@ -1,0 +1,42 @@
+Here are a few practical steps to resolve the “cramped” or “cut off” chart issues:
+
+Give each chart’s container a stable (non-zero) height.
+
+For example, wrap each chart in a <div className="w-full h-64"> or similar so that <ResponsiveContainer width="100%" height="100%"> can fill that space correctly.
+If your parent containers have no fixed height, Recharts will end up too small or squashed.
+Adjust the chart’s margin/padding so axes and labels don’t get clipped.
+
+In Recharts, you can set something like:
+jsx
+Copy
+<BarChart 
+  data={data}
+  margin={{ top: 20, right: 20, bottom: 20, left: 20 }}
+>
+  {/* axes, bars, etc. */}
+</BarChart>
+This ensures that longer axis labels or legends have enough space.
+Verify your grid or flex layout isn’t forcing a small width.
+
+If you’re using a grid for the three charts, make sure the columns allow each chart enough horizontal space. For instance, use md:grid-cols-2 or grid-cols-3 with enough column width so the chart can expand.
+If your layout sets overflow: hidden or uses absolute positioning, it might cut off part of the chart.
+Move or resize the Legend if it’s overlapping.
+
+You can adjust the legend’s position or layout with <Legend layout="horizontal" align="center" /> or place it below the chart. If you see text collisions, sometimes moving the legend below or above helps.
+Shorten or rotate long axis labels.
+
+If your axis labels or category names are very long, use the angle, textAnchor, or tickFormatter props (e.g., tick={{ angle: -45 }}) to rotate or shorten them so they don’t collide with each other.
+Be sure each <ResponsiveContainer> is the outermost chart container.
+
+Nothing else should wrap the chart with a conflicting width/height.
+Example:
+jsx
+Copy
+<div className="rounded-lg shadow-sm p-4 w-full h-64">
+  <ResponsiveContainer width="100%" height="100%">
+    <BarChart data={data}>
+      {/* …axes, bars, legends… */}
+    </BarChart>
+  </ResponsiveContainer>
+</div>
+By combining a definite container height, responsive Recharts components, and enough margins/space around the chart, you should get nicely displayed charts without cut-off labels or legends.
