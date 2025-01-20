@@ -16,6 +16,7 @@ import {
   Pie,
   Cell,
   Legend,
+  Sector,
 } from "recharts";
 import type { Teacher } from "@db/schema";
 
@@ -24,6 +25,74 @@ type TeacherStatsProps = {
 };
 
 const COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042', '#8884d8'];
+const RADIAN = Math.PI / 180;
+
+// Custom label component for bar charts with smart positioning
+const CustomBarLabel = ({ x, y, width, value, viewBox }: any) => {
+  // Calculate position to avoid overlaps
+  const xPos = x + width / 2;
+  const yPos = y - 10; // Adjust based on value size
+  const textAnchor = "middle";
+
+  // Only show label if there's enough space
+  if (width < 20) return null;
+
+  return (
+    <text
+      x={xPos}
+      y={yPos}
+      fill="#666"
+      textAnchor={textAnchor}
+      fontSize={12}
+      dominantBaseline="middle"
+    >
+      {value}
+    </text>
+  );
+};
+
+// Custom label component for pie chart with dynamic positioning
+const CustomPieLabel = ({
+  cx,
+  cy,
+  midAngle,
+  innerRadius,
+  outerRadius,
+  percent,
+  value,
+  name,
+}: any) => {
+  const radius = outerRadius * 1.4; // Increase label distance from pie
+  const x = cx + radius * Math.cos(-midAngle * RADIAN);
+  const y = cy + radius * Math.sin(-midAngle * RADIAN);
+
+  // Calculate text anchor based on position to prevent overlapping
+  const textAnchor = x > cx ? 'start' : 'end';
+
+  return (
+    <g>
+      {/* Draw connecting line */}
+      <path
+        d={`M${cx + outerRadius * Math.cos(-midAngle * RADIAN)},${
+          cy + outerRadius * Math.sin(-midAngle * RADIAN)
+        }L${x},${y}`}
+        stroke="#666"
+        fill="none"
+      />
+      {/* Draw label text */}
+      <text
+        x={x}
+        y={y}
+        textAnchor={textAnchor}
+        fill="#666"
+        fontSize={12}
+        dominantBaseline="middle"
+      >
+        {`${name} (${(percent * 100).toFixed(1)}%)`}
+      </text>
+    </g>
+  );
+};
 
 export default function TeacherStats({ teachers }: TeacherStatsProps) {
   // Calculate statistics
@@ -72,26 +141,11 @@ export default function TeacherStats({ teachers }: TeacherStatsProps) {
 
   const qualificationData = Object.entries(qualificationCounts)
     .map(([qualification, count]) => ({
-      qualification: qualification.length > 20 ? qualification.substring(0, 20) + "..." : qualification,
+      qualification: qualification.length > 25 ? qualification.substring(0, 25) + "..." : qualification,
       count,
       percentage: (count / totalTeachers * 100).toFixed(1),
     }))
     .sort((a, b) => b.count - a.count);
-
-  const CustomizedLabel = ({ x, y, fill, value }: any) => {
-    return (
-      <text 
-        x={x} 
-        y={y} 
-        dy={-4}
-        fontSize={12} 
-        fill={fill} 
-        textAnchor="middle"
-      >
-        {value}
-      </text>
-    );
-  };
 
   return (
     <>
@@ -115,14 +169,14 @@ export default function TeacherStats({ teachers }: TeacherStatsProps) {
             <ResponsiveContainer width="100%" height="100%">
               <BarChart 
                 data={lgaData}
-                margin={{ top: 20, right: 30, left: 20, bottom: 60 }}
+                margin={{ top: 30, right: 30, left: 20, bottom: 70 }}
               >
                 <CartesianGrid strokeDasharray="3 3" />
                 <XAxis 
                   dataKey="lga" 
                   angle={-45}
                   textAnchor="end"
-                  height={60}
+                  height={70}
                   interval={0}
                   tick={{ fontSize: 12 }}
                 />
@@ -134,7 +188,8 @@ export default function TeacherStats({ teachers }: TeacherStatsProps) {
                 <Bar 
                   dataKey="count" 
                   fill="#8884d8"
-                  label={<CustomizedLabel />}
+                  label={<CustomBarLabel />}
+                  minPointSize={2}
                 />
               </BarChart>
             </ResponsiveContainer>
@@ -147,7 +202,7 @@ export default function TeacherStats({ teachers }: TeacherStatsProps) {
           </CardHeader>
           <CardContent className="h-[300px]">
             <ResponsiveContainer width="100%" height="100%">
-              <PieChart margin={{ top: 20, right: 30, left: 20, bottom: 20 }}>
+              <PieChart margin={{ top: 20, right: 80, left: 20, bottom: 20 }}>
                 <Pie
                   data={subjectData}
                   dataKey="count"
@@ -155,8 +210,8 @@ export default function TeacherStats({ teachers }: TeacherStatsProps) {
                   cx="50%"
                   cy="50%"
                   outerRadius={80}
-                  label={({ subject, percentage }) => `${subject} (${percentage}%)`}
-                  labelLine={{ strokeWidth: 1, stroke: '#888' }}
+                  label={CustomPieLabel}
+                  labelLine={false}
                 >
                   {subjectData.map((entry, index) => (
                     <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
@@ -167,7 +222,10 @@ export default function TeacherStats({ teachers }: TeacherStatsProps) {
                   layout="vertical" 
                   align="right"
                   verticalAlign="middle"
-                  wrapperStyle={{ fontSize: '12px' }}
+                  wrapperStyle={{ 
+                    fontSize: '12px',
+                    paddingLeft: '20px',
+                  }}
                 />
               </PieChart>
             </ResponsiveContainer>
@@ -182,14 +240,14 @@ export default function TeacherStats({ teachers }: TeacherStatsProps) {
             <ResponsiveContainer width="100%" height="100%">
               <BarChart 
                 data={qualificationData}
-                margin={{ top: 20, right: 30, left: 20, bottom: 60 }}
+                margin={{ top: 30, right: 30, left: 20, bottom: 70 }}
               >
                 <CartesianGrid strokeDasharray="3 3" />
                 <XAxis 
                   dataKey="qualification" 
                   angle={-45}
                   textAnchor="end"
-                  height={60}
+                  height={70}
                   interval={0}
                   tick={{ fontSize: 12 }}
                 />
@@ -201,7 +259,8 @@ export default function TeacherStats({ teachers }: TeacherStatsProps) {
                 <Bar 
                   dataKey="count" 
                   fill="#82ca9d"
-                  label={<CustomizedLabel />}
+                  label={<CustomBarLabel />}
+                  minPointSize={2}
                 />
               </BarChart>
             </ResponsiveContainer>
