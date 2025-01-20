@@ -6,10 +6,12 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
 import Navigation from "@/components/layout/navigation";
-import type { Teacher, InsertTeacher } from "@db/schema";
+import type { Teacher } from "@db/schema";
+
+// Omit the auto-generated fields and userId from the form data
+type TeacherFormData = Omit<Teacher, 'id' | 'createdAt' | 'updatedAt' | 'userId'>;
 
 export default function TeacherForm() {
   const [location, navigate] = useLocation();
@@ -23,7 +25,7 @@ export default function TeacherForm() {
 
   const isEditing = !!teacherId;
 
-  const form = useForm<InsertTeacher>({
+  const form = useForm<TeacherFormData>({
     defaultValues: {
       name: "",
       email: "",
@@ -31,7 +33,7 @@ export default function TeacherForm() {
       subjectsTaught: "",
       school: "",
       lga: "",
-      employmentDate: new Date().toISOString(),
+      employmentDate: new Date().toISOString().split('T')[0],
     },
   });
 
@@ -46,14 +48,14 @@ export default function TeacherForm() {
     if (teacher) {
       form.reset({
         ...teacher,
-        employmentDate: new Date(teacher.employmentDate).toISOString().split("T")[0],
+        employmentDate: new Date(teacher.employmentDate).toISOString().split('T')[0],
       });
     }
-  }, [teacher]);
+  }, [teacher, form]);
 
   // Handle form submission
   const mutation = useMutation({
-    mutationFn: async (data: InsertTeacher) => {
+    mutationFn: async (data: TeacherFormData) => {
       const response = await fetch(
         isEditing ? `/api/teachers/${teacherId}` : "/api/teachers",
         {
@@ -61,7 +63,10 @@ export default function TeacherForm() {
           headers: {
             "Content-Type": "application/json",
           },
-          body: JSON.stringify(data),
+          body: JSON.stringify({
+            ...data,
+            employmentDate: new Date(data.employmentDate),
+          }),
           credentials: "include",
         }
       );
@@ -89,14 +94,14 @@ export default function TeacherForm() {
     },
   });
 
-  const onSubmit = (data: InsertTeacher) => {
+  const onSubmit = (data: TeacherFormData) => {
     mutation.mutate(data);
   };
 
   return (
     <div className="min-h-screen bg-background">
       <Navigation />
-      
+
       <main className="container mx-auto px-4 py-8">
         <Card className="max-w-2xl mx-auto">
           <CardHeader>
