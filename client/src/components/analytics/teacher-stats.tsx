@@ -17,7 +17,11 @@ import {
   Cell,
   Legend,
   Sector,
+  Brush,
+  ReferenceArea,
 } from "recharts";
+import { Button } from "@/components/ui/button";
+import { ZoomIn, ZoomOut, RotateCcw } from "lucide-react";
 import type { Teacher } from "@db/schema";
 import { useEffect, useState, useCallback } from "react";
 import { useResizeObserver } from "@/hooks/use-resize";
@@ -66,69 +70,30 @@ const CustomPieTooltip = ({ active, payload }: any) => {
   );
 };
 
-// Custom label component for bar charts with smart positioning
-const CustomBarLabel = ({ x, y, width, value, viewBox }: any) => {
-  // Calculate position to avoid overlaps
-  const xPos = x + width / 2;
-  const yPos = y - 10; // Adjust based on value size
-  const textAnchor = "middle";
-
-  // Only show label if there's enough space
-  if (width < 20) return null;
-
-  return (
-    <text
-      x={xPos}
-      y={yPos}
-      fill="#666"
-      textAnchor={textAnchor}
-      fontSize={12}
-      dominantBaseline="middle"
-    >
-      {value}
-    </text>
-  );
-};
-
-// Custom label component for pie chart with dynamic positioning
-const CustomPieLabel = ({
-  cx,
-  cy,
-  midAngle,
-  innerRadius,
-  outerRadius,
-  percent,
-  value,
-  name,
-}: any) => {
-  const radius = outerRadius * 1.4; // Increase label distance from pie
-  const x = cx + radius * Math.cos(-midAngle * RADIAN);
-  const y = cy + radius * Math.sin(-midAngle * RADIAN);
-
-  // Calculate text anchor based on position to prevent overlapping
-  const textAnchor = x > cx ? 'start' : 'end';
+// Active shape component for pie chart zoom
+const ActiveShape = (props: any) => {
+  const { cx, cy, innerRadius, outerRadius, startAngle, endAngle, fill } = props;
 
   return (
     <g>
-      {/* Draw connecting line */}
-      <path
-        d={`M${cx + outerRadius * Math.cos(-midAngle * RADIAN)},${
-          cy + outerRadius * Math.sin(-midAngle * RADIAN)
-        }L${x},${y}`}
-        stroke="#666"
-        fill="none"
+      <Sector
+        cx={cx}
+        cy={cy}
+        innerRadius={innerRadius}
+        outerRadius={outerRadius * 1.1} // Increase size for zoom effect
+        startAngle={startAngle}
+        endAngle={endAngle}
+        fill={fill}
       />
-      {/* Draw label text */}
-      <text
-        x={x}
-        y={y}
-        textAnchor={textAnchor}
-        fill="#666"
-        fontSize={12}
-        dominantBaseline="middle"
-      >
-        {`${name} (${(percent * 100).toFixed(1)}%)`}
-      </text>
+      <Sector
+        cx={cx}
+        cy={cy}
+        startAngle={startAngle}
+        endAngle={endAngle}
+        innerRadius={outerRadius + 6}
+        outerRadius={outerRadius + 10}
+        fill={fill}
+      />
     </g>
   );
 };
@@ -150,6 +115,23 @@ const ResponsiveChartContainer = ({ children, minHeight = 300 }: { children: Rea
 };
 
 export default function TeacherStats({ teachers }: TeacherStatsProps) {
+  // Chart state
+  const [activePieIndex, setActivePieIndex] = useState<number | undefined>();
+  const [lgaChartState, setLgaChartState] = useState({
+    leftIndex: 0,
+    rightIndex: 0,
+    refAreaLeft: '',
+    refAreaRight: '',
+    isZooming: false
+  });
+  const [qualChartState, setQualChartState] = useState({
+    leftIndex: 0,
+    rightIndex: 0,
+    refAreaLeft: '',
+    refAreaRight: '',
+    isZooming: false
+  });
+
   // Calculate statistics
   const totalTeachers = teachers.length;
 
@@ -205,6 +187,53 @@ export default function TeacherStats({ teachers }: TeacherStatsProps) {
     }))
     .sort((a, b) => b.count - a.count);
 
+  // Chart zoom handlers
+  const handleBarChartMouseDown = (e: any, chartState: any, setChartState: any) => {
+    if (!e) return;
+    setChartState({
+      ...chartState,
+      refAreaLeft: e.activeLabel,
+      isZooming: true
+    });
+  };
+
+  const handleBarChartMouseMove = (e: any, chartState: any, setChartState: any) => {
+    if (!chartState.isZooming) return;
+    setChartState({
+      ...chartState,
+      refAreaRight: e.activeLabel
+    });
+  };
+
+  const handleBarChartMouseUp = (chartState: any, setChartState: any) => {
+    if (!chartState.isZooming) return;
+
+    let leftIndex = chartState.refAreaLeft;
+    let rightIndex = chartState.refAreaRight;
+
+    if (leftIndex > rightIndex) {
+      [leftIndex, rightIndex] = [rightIndex, leftIndex];
+    }
+
+    setChartState({
+      leftIndex,
+      rightIndex,
+      refAreaLeft: '',
+      refAreaRight: '',
+      isZooming: false
+    });
+  };
+
+  const resetZoom = (setChartState: any) => {
+    setChartState({
+      leftIndex: 0,
+      rightIndex: 0,
+      refAreaLeft: '',
+      refAreaRight: '',
+      isZooming: false
+    });
+  };
+
   return (
     <div className="space-y-6">
       {/* Summary Cards */}
@@ -224,7 +253,16 @@ export default function TeacherStats({ teachers }: TeacherStatsProps) {
         {/* LGA Distribution */}
         <Card className="col-span-1">
           <CardHeader className="p-4 sm:p-6">
-            <CardTitle className="text-base sm:text-lg">Teachers by LGA</CardTitle>
+            <div className="flex justify-between items-center">
+              <CardTitle className="text-base sm:text-lg">Teachers by LGA</CardTitle>
+              <Button 
+                variant="outline" 
+                size="sm"
+                onClick={() => resetZoom(setLgaChartState)}
+              >
+                <RotateCcw className="h-4 w-4" />
+              </Button>
+            </div>
           </CardHeader>
           <CardContent className="p-4 sm:p-6 pt-0">
             <ResponsiveChartContainer>
@@ -232,6 +270,9 @@ export default function TeacherStats({ teachers }: TeacherStatsProps) {
                 <BarChart 
                   data={lgaData}
                   margin={{ top: 30, right: 30, left: 20, bottom: 70 }}
+                  onMouseDown={(e) => handleBarChartMouseDown(e, lgaChartState, setLgaChartState)}
+                  onMouseMove={(e) => handleBarChartMouseMove(e, lgaChartState, setLgaChartState)}
+                  onMouseUp={() => handleBarChartMouseUp(lgaChartState, setLgaChartState)}
                 >
                   <CartesianGrid strokeDasharray="3 3" />
                   <XAxis 
@@ -241,6 +282,7 @@ export default function TeacherStats({ teachers }: TeacherStatsProps) {
                     height={70}
                     interval={0}
                     tick={{ fontSize: 12 }}
+                    domain={[lgaChartState.leftIndex, lgaChartState.rightIndex]}
                   />
                   <YAxis />
                   <Tooltip 
@@ -250,9 +292,16 @@ export default function TeacherStats({ teachers }: TeacherStatsProps) {
                   <Bar 
                     dataKey="count" 
                     fill="#8884d8"
-                    label={<CustomBarLabel />}
                     minPointSize={2}
                   />
+                  {lgaChartState.refAreaLeft && lgaChartState.refAreaRight ? (
+                    <ReferenceArea
+                      x1={lgaChartState.refAreaLeft}
+                      x2={lgaChartState.refAreaRight}
+                      strokeOpacity={0.3}
+                    />
+                  ) : null}
+                  <Brush dataKey="lga" height={30} stroke="#8884d8" />
                 </BarChart>
               </ResponsiveContainer>
             </ResponsiveChartContainer>
@@ -275,8 +324,10 @@ export default function TeacherStats({ teachers }: TeacherStatsProps) {
                     cx="50%"
                     cy="50%"
                     outerRadius={80}
-                    label={CustomPieLabel}
-                    labelLine={false}
+                    activeIndex={activePieIndex}
+                    activeShape={ActiveShape}
+                    onMouseEnter={(_, index) => setActivePieIndex(index)}
+                    onMouseLeave={() => setActivePieIndex(undefined)}
                   >
                     {subjectData.map((entry, index) => (
                       <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
@@ -303,7 +354,16 @@ export default function TeacherStats({ teachers }: TeacherStatsProps) {
         {/* Qualification Distribution */}
         <Card className="col-span-1 lg:col-span-2">
           <CardHeader className="p-4 sm:p-6">
-            <CardTitle className="text-base sm:text-lg">Qualification Distribution</CardTitle>
+            <div className="flex justify-between items-center">
+              <CardTitle className="text-base sm:text-lg">Qualification Distribution</CardTitle>
+              <Button 
+                variant="outline" 
+                size="sm"
+                onClick={() => resetZoom(setQualChartState)}
+              >
+                <RotateCcw className="h-4 w-4" />
+              </Button>
+            </div>
           </CardHeader>
           <CardContent className="p-4 sm:p-6 pt-0">
             <ResponsiveChartContainer minHeight={400}>
@@ -311,6 +371,9 @@ export default function TeacherStats({ teachers }: TeacherStatsProps) {
                 <BarChart 
                   data={qualificationData}
                   margin={{ top: 30, right: 30, left: 20, bottom: 70 }}
+                  onMouseDown={(e) => handleBarChartMouseDown(e, qualChartState, setQualChartState)}
+                  onMouseMove={(e) => handleBarChartMouseMove(e, qualChartState, setQualChartState)}
+                  onMouseUp={() => handleBarChartMouseUp(qualChartState, setQualChartState)}
                 >
                   <CartesianGrid strokeDasharray="3 3" />
                   <XAxis 
@@ -320,6 +383,7 @@ export default function TeacherStats({ teachers }: TeacherStatsProps) {
                     height={70}
                     interval={0}
                     tick={{ fontSize: 12 }}
+                    domain={[qualChartState.leftIndex, qualChartState.rightIndex]}
                   />
                   <YAxis />
                   <Tooltip 
@@ -329,9 +393,16 @@ export default function TeacherStats({ teachers }: TeacherStatsProps) {
                   <Bar 
                     dataKey="count" 
                     fill="#82ca9d"
-                    label={<CustomBarLabel />}
                     minPointSize={2}
                   />
+                  {qualChartState.refAreaLeft && qualChartState.refAreaRight ? (
+                    <ReferenceArea
+                      x1={qualChartState.refAreaLeft}
+                      x2={qualChartState.refAreaRight}
+                      strokeOpacity={0.3}
+                    />
+                  ) : null}
+                  <Brush dataKey="qualification" height={30} stroke="#82ca9d" />
                 </BarChart>
               </ResponsiveContainer>
             </ResponsiveChartContainer>
